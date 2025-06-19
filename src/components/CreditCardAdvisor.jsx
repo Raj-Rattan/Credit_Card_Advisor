@@ -3,8 +3,228 @@ import { CreditCard, Sparkles } from 'lucide-react';
 import ChatInterface from './ChatInterface';
 import CardRecommendations from './CardRecommendations';
 import { API_CONFIG, AI_MODELS } from '../config';
+// import { generatePersonalizedMockCards } from '../../server';
 
 const CreditCardAdvisor = () => {
+  function generatePersonalizedMockCards(userData) {
+    const { monthlyIncome, creditScore, spendingHabits, preferredBenefits } = userData;
+    
+    // Base set of cards
+    const allMockCards = [
+      {
+        id: 1,
+        name: "HDFC Diners Club Black",
+        issuer: "HDFC Bank",
+        joining_fee: 10000,
+        annual_fee: 10000,
+        reward_type: "Points",
+        reward_rate: "5-10%",
+        min_income: 1800000,
+        min_credit_score: 750,
+        special_perks: JSON.stringify(["Airport lounge access", "Golf privileges"]),
+        categories: JSON.stringify(["travel", "dining"]),
+        apply_link: "https://www.hdfcbank.com/",
+        card_image: "hdfc_diners_black.jpg"
+      },
+      {
+        id: 2,
+        name: "SBI Card PRIME",
+        issuer: "SBI Card",
+        joining_fee: 2999,
+        annual_fee: 2999,
+        reward_type: "Points",
+        reward_rate: "2-5%",
+        min_income: 600000,
+        min_credit_score: 700,
+        special_perks: JSON.stringify(["Fuel surcharge waiver", "Movie ticket discounts"]),
+        categories: JSON.stringify(["fuel", "entertainment"]),
+        apply_link: "https://www.sbicard.com/",
+        card_image: "sbi_prime.jpg"
+      },
+      {
+        id: 3,
+        name: "ICICI Amazon Pay Credit Card",
+        issuer: "ICICI Bank",
+        joining_fee: 0,
+        annual_fee: 0,
+        reward_type: "Cashback",
+        reward_rate: "1-5%",
+        min_income: 300000,
+        min_credit_score: 650,
+        special_perks: JSON.stringify(["Amazon Prime membership", "No-cost EMI"]),
+        categories: JSON.stringify(["shopping", "bills"]),
+        apply_link: "https://www.icicibank.com/",
+        card_image: "icici_amazon.jpg"
+      },
+      {
+        id: 4,
+        name: "Axis Bank Flipkart Credit Card",
+        issuer: "Axis Bank",
+        joining_fee: 500,
+        annual_fee: 500,
+        reward_type: "Cashback",
+        reward_rate: "1.5-5%",
+        min_income: 250000,
+        min_credit_score: 650,
+        special_perks: JSON.stringify(["Flipkart vouchers", "Welcome points"]),
+        categories: JSON.stringify(["shopping", "groceries"]),
+        apply_link: "https://www.axisbank.com/",
+        card_image: "axis_flipkart.jpg"
+      },
+      {
+        id: 5,
+        name: "Standard Chartered Manhattan Card",
+        issuer: "Standard Chartered",
+        joining_fee: 999,
+        annual_fee: 999,
+        reward_type: "Cashback",
+        reward_rate: "1-3%",
+        min_income: 180000,
+        min_credit_score: 600,
+        special_perks: JSON.stringify(["Dining discounts", "Movie offers"]),
+        categories: JSON.stringify(["dining", "entertainment"]),
+        apply_link: "https://www.sc.com/in/",
+        card_image: "sc_manhattan.jpg"
+      },
+      {
+        id: 6,
+        name: "Citi PremierMiles Card",
+        issuer: "Citibank",
+        joining_fee: 3000,
+        annual_fee: 3000,
+        reward_type: "Points",
+        reward_rate: "4-10 miles per ₹100",
+        min_income: 750000,
+        min_credit_score: 720,
+        special_perks: JSON.stringify(["Complimentary lounge access", "Travel insurance"]),
+        categories: JSON.stringify(["travel", "international"]),
+        apply_link: "https://www.citibank.co.in/",
+        card_image: "citi_premiermiles.jpg"
+      },
+      {
+        id: 7,
+        name: "HSBC Visa Platinum Card",
+        issuer: "HSBC",
+        joining_fee: 1000,
+        annual_fee: 1000,
+        reward_type: "Points",
+        reward_rate: "2 points per ₹100",
+        min_income: 500000,
+        min_credit_score: 680,
+        special_perks: JSON.stringify(["Fuel surcharge waiver", "Extended warranty"]),
+        categories: JSON.stringify(["fuel", "shopping"]),
+        apply_link: "https://www.hsbc.co.in/",
+        card_image: "hsbc_platinum.jpg"
+      },
+      {
+        id: 8,
+        name: "Kotak Urbane Card",
+        issuer: "Kotak Mahindra Bank",
+        joining_fee: 700,
+        annual_fee: 700,
+        reward_type: "Cashback",
+        reward_rate: "1-2%",
+        min_income: 300000,
+        min_credit_score: 650,
+        special_perks: JSON.stringify(["1+1 movie tickets", "Dining discounts"]),
+        categories: JSON.stringify(["entertainment", "dining"]),
+        apply_link: "https://www.kotak.com/",
+        card_image: "kotak_urbane.jpg"
+      }
+    ];
+    
+    // Filter cards based on income and credit score
+    let eligibleCards = allMockCards.filter(card => 
+      card.min_income <= monthlyIncome && 
+      card.min_credit_score <= creditScore
+    );
+    
+    // If no cards match, relax the criteria a bit
+    if (eligibleCards.length === 0) {
+      eligibleCards = allMockCards.filter(card => 
+        card.min_income <= monthlyIncome * 1.2 || 
+        card.min_credit_score <= creditScore + 50
+      );
+    }
+    
+    // If still no cards, return a subset of all cards
+    if (eligibleCards.length === 0) {
+      eligibleCards = allMockCards.slice(0, 3);
+    }
+    
+    // Score cards based on user preferences
+    const scoredCards = eligibleCards.map(card => {
+      let score = 0;
+      const cardCategories = JSON.parse(card.categories);
+      
+      // Income score - higher score if income is well above minimum
+      if (card.min_income <= monthlyIncome) {
+        score += 20;
+        if (card.min_income <= monthlyIncome * 0.5) {
+          score += 10; // Extra points if income is much higher than minimum
+        }
+      }
+      
+      // Category matching score
+      const matchingCategories = cardCategories.filter(cat => 
+        spendingHabits?.includes(cat)
+      );
+      score += matchingCategories.length * 15;
+      
+      // Benefits preference score
+      if (preferredBenefits === 'cashback' && card.reward_type === 'Cashback') score += 25;
+      if (preferredBenefits === 'travel_points' && card.reward_type === 'Points') score += 25;
+      
+      // Calculate yearly rewards based on spending habits
+      const averageMonthlySpend = monthlyIncome * 0.3; // Assume 30% of income is spent on card
+      const yearlySpend = averageMonthlySpend * 12;
+      let yearly_rewards = card.reward_type === 'Cashback' 
+        ? Math.floor(yearlySpend * 0.02) 
+        : Math.floor(yearlySpend * 0.015);
+      
+      // Generate personalized reasons
+      const reasons = [];
+      
+      // Reason based on reward type preference
+      if (preferredBenefits === 'cashback' && card.reward_type === 'Cashback') {
+        reasons.push('High cashback rewards match your preference');
+      } else if (preferredBenefits === 'travel_points' && card.reward_type === 'Points') {
+        reasons.push('Excellent travel rewards program');
+      }
+      
+      // Reason based on spending categories
+      if (matchingCategories.length > 0) {
+        const categories = matchingCategories.join(' and ');
+        reasons.push(`Great rewards on ${categories} spending`);
+      }
+      
+      // Reason based on annual fee
+      if (card.annual_fee === 0) {
+        reasons.push('Zero annual fee');
+      } else if (card.annual_fee < monthlyIncome * 0.01) {
+        reasons.push('Low annual fee relative to your income');
+      }
+      
+      // Reason based on special perks
+      const perks = JSON.parse(card.special_perks);
+      if (perks.length > 0) {
+        reasons.push(`Premium perks: ${perks[0]}`);
+      }
+      
+      return { 
+        ...card, 
+        score, 
+        yearly_rewards,
+        reasons
+      };
+    });
+    
+    // Sort by score and take top 3
+    return scoredCards
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3);
+  }
+  
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showRecommendations, setShowRecommendations] = useState(false);
@@ -147,16 +367,20 @@ Keep your response concise and friendly.`;
   // Fetch recommendations from backend API with AI enhancement
   const fetchRecommendations = async (userData) => {
     try {
+
+      console.log(userData)
       // First get base recommendations from our backend
-      const response = await fetch('/api/recommendations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData)
-      });
+      // const response = await fetch('/api/recommendations', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(userData)
+      // });
+
+
       
-      if (!response.ok) throw new Error('Failed to fetch recommendations');
+      // if (!response.ok) throw new Error('Failed to fetch recommendations');
       
-      const baseRecommendations = await response.json();
+      const baseRecommendations = generatePersonalizedMockCards(JSON.stringify(userData));
       
       // Use DeepSeek API to enhance the recommendations with personalized reasons
       const enhancedRecommendations = await enhanceRecommendationsWithAI(baseRecommendations, userData);
